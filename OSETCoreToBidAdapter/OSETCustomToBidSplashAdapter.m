@@ -51,9 +51,9 @@
     if (result.win) {
 //        [self.splashAd setPrice:@(result.winnerPrice)];
 //        [self.splashAd win:@(result.winnerPrice)];
-        NSLog(@"OSET竞价成功");
+        WindmillLogDebug(@"OSET竞价成功", @"%@", NSStringFromSelector(_cmd));
     }else{
-        NSLog(@"OSET竞价失败");
+        WindmillLogDebug(@"OSET竞价失败", @"%@", NSStringFromSelector(_cmd));
     }
 }
 - (void)destory {
@@ -101,7 +101,7 @@
     [self.bridge splashAdWillVisible:self];
 }
 - (void)splashWillClose:(id)splashAd{
-    NSLog(@"OSETSDK splashWillClose");
+    WindmillLogDebug(@"OSET", @"%@", NSStringFromSelector(_cmd));
 }
 
 - (void)dealloc {

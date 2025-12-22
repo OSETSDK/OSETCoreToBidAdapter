@@ -8,10 +8,12 @@
 #import "OSETCustomToBidNativeAdapter.h"
 #import "OSETNativeAdViewCreator.h"
 #import <WindFoundation/WindFoundation.h>
+#import "OSETCustomToBidNativeAdData.h"
 #import <OSETSDK/OSETSDK.h>
-@interface OSETCustomToBidNativeAdapter ()<OSETNativeAdDelegate>
+@interface OSETCustomToBidNativeAdapter ()<OSETNativeAdDelegate,OSETNativeDataAdDelegate,OSETNativeAdViewCreatorDelegate>
 @property (nonatomic, weak) id<AWMCustomNativeAdapterBridge> bridge;
 @property (nonatomic,strong) OSETNativeAd *nativeAd;
+@property (nonatomic,strong) OSETNativeDataAd *nativeDataAd;
 @property (nonatomic, strong) NSArray<OSETNativeAd *> *nativeAdDataArray;
 
 @end
@@ -26,11 +28,27 @@
 }
 
 - (void)loadAdWithPlacementId:(NSString *)placementId adSize:(CGSize)size parameter:(AWMParameter *)parameter {
-    
-    self.nativeAd = [[OSETNativeAd alloc] initWithSlotId:placementId size:size rootViewController:nil];
-    self.nativeAd.delegate = self;
-    [self.nativeAd loadAdData];
-
+    // 获取特定键的值
+    if([parameter.customInfo[@"isExpressAd"] boolValue] == YES){
+        if(!self.nativeAd){
+            self.nativeAd = [[OSETNativeAd alloc] initWithSlotId:placementId size:size rootViewController:nil];
+            self.nativeAd.delegate = self;
+            [self.nativeAd loadAdData];
+        }else{
+            self.nativeAd.delegate = self;
+            [self.nativeAd loadAdData];
+        }
+       
+    }else{
+        if(!self.nativeDataAd){
+            self.nativeDataAd = [[OSETNativeDataAd alloc]initWithSlotId:placementId size:size rootViewController:nil];
+            self.nativeDataAd.delegate = self;
+            [self.nativeDataAd loadAdData];
+        }else{
+            self.nativeDataAd.delegate = self;
+            [self.nativeDataAd loadAdData];
+        }
+    }
 }
 
 - (BOOL)mediatedAdStatus {
@@ -47,8 +65,33 @@
 }
 
 
-- (void)nativeExpressAdLoadSuccessWithNative:(id)native nativeExpressViews:(NSArray *)nativeExpressViews{
+/// 信息流加载成功
+- (void)nativeDataAdLoadSuccessWithNative:(id)nativeDataAd nativeExpressViews:(NSArray<OSETNativeDataAdObject *> * _Nullable)nativeDataObjects{
+    WindmillLogDebug(@"OSET", @"%@", NSStringFromSelector(_cmd));
+    OSETNativeDataAdObject * adData = nativeDataObjects.firstObject;
+    NSString *price = [NSString stringWithFormat:@"%ld",(long)adData.eCPM];
+    [self.bridge nativeAd:self didAdServerResponseWithExt:@{
+        AWMMediaAdLoadingExtECPM: price
+    }];
+    NSMutableArray *adArray = [[NSMutableArray alloc] init];
+    AWMMediatedNativeAd *mNativeAd = [[AWMMediatedNativeAd alloc] init];
+    mNativeAd.originMediatedNativeAd = adData;
+    mNativeAd.data = [[OSETCustomToBidNativeAdData alloc]initWithAd:adData];
+    OSETNativeAdViewCreator * creator = [[OSETNativeAdViewCreator alloc] initWithNativeDataAdAd:self.nativeDataAd adData:adData];
+    creator.delegate = self;
+    mNativeAd.viewCreator = creator;
+    [adArray addObject:mNativeAd];
+    [self.bridge nativeAd:self didLoadWithNativeAds:adArray];
+}
+/// 加载失败
+/// @param nativeDataAd 信息流实例
+/// @param error 错误信息
+- (void)nativeDataAdFailedToLoad:(id)nativeDataAd error:(NSError *)error{
     
+}
+
+
+- (void)nativeExpressAdLoadSuccessWithNative:(id)native nativeExpressViews:(NSArray *)nativeExpressViews{
     WindmillLogDebug(@"OSET", @"%@", NSStringFromSelector(_cmd));
     OSETBaseView *adView = nativeExpressViews.firstObject;
     NSString *price = [NSString stringWithFormat:@"%ld",(long)adView.eCPM];
@@ -79,7 +122,7 @@
 }
 - (void)nativeExpressAdFailedToRender:(nonnull id)nativeExpressView {
     WindmillLogDebug(@"OSET", @"%@", NSStringFromSelector(_cmd));
-    [self.bridge nativeAd:self renderFailWithExpressView:nativeExpressView andError:nil];
+    [self.bridge nativeAd:self renderFailWithExpressView:nativeExpressView andError:[NSError new]];
 
 }
 - (void)nativeExpressAdDidClick:(nonnull id)nativeExpressView {
@@ -90,9 +133,36 @@
 - (void)nativeExpressAdDidClose:(nonnull id)nativeExpressView {
     WindmillLogDebug(@"OSET", @"%@", NSStringFromSelector(_cmd));
     [self.bridge nativeAd:self didClose:nativeExpressView closeReasons:@[]];
-
 }
 
+- (void)nativeExpressAdDidExposured:(id)nativeExpressView{
+    [self.bridge nativeAd:self didVisibleWithMediatedNativeAd:nativeExpressView];
+}
+/**
+ 广告曝光回调
+ */
+- (void)OSETNativeAdViewCreatorWillExpose:(OSETNativeAdRenderer *)renderer{
+    [self.bridge nativeAd:self didVisibleWithMediatedNativeAd:renderer.dataObject];
+}
+/**
+ 广告点击回调
+ */
+- (void)OSETNativeAdViewCreatorDidClick:(OSETNativeAdRenderer *)renderer{
+    [self.bridge nativeAd:self didClickWithMediatedNativeAd:renderer.dataObject];
+}
 
+/**
+ 广告关闭回调
+ */
+- (void)OSETNativeAdViewCreatorDidClose:(OSETNativeAdRenderer *)renderer{
+    [self.bridge nativeAd:self didClose:renderer.dataObject closeReasons:@[]];
+}
+
+/**
+ 广告详情页关闭回调
+ */
+- (void)OSETNativeAdViewCreatorDetailViewClosed:(OSETNativeAdRenderer *)renderer{
+    
+}
 
 @end
