@@ -101,7 +101,7 @@
     NSMutableArray *adArray = [[NSMutableArray alloc] init];
     self.nativeAd.delegate = self;
     AWMMediatedNativeAd *mNativeAd = [[AWMMediatedNativeAd alloc] init];
-    mNativeAd.originMediatedNativeAd = self.nativeAd;
+    mNativeAd.originMediatedNativeAd = adView;
     mNativeAd.viewCreator = [[OSETNativeAdViewCreator alloc] initWithExpressAd:self.nativeAd adView:adView];
     mNativeAd.view = adView;
     [adArray addObject:mNativeAd];
