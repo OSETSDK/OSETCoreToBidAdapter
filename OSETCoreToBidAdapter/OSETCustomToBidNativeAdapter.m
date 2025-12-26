@@ -164,5 +164,7 @@
 - (void)OSETNativeAdViewCreatorDetailViewClosed:(OSETNativeAdRenderer *)renderer{
     
 }
-
+-(void)dealloc{
+//    NSLog(@"dealloc ====  %@",self);
+}
 @end
