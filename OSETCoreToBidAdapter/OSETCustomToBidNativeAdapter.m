@@ -136,6 +136,13 @@
 }
 
 - (void)nativeExpressAdDidExposured:(id)nativeExpressView{
+    if([nativeExpressView isKindOfClass:[UIView class]]){
+        UIView * v = nativeExpressView;
+        if(v.superview){
+            CGRect r = v.superview.frame;
+            v.superview.frame = CGRectMake(r.origin.x, r.origin.y, v.bounds.size.width, v.bounds.size.height);
+        }
+    }
     [self.bridge nativeAd:self didVisibleWithMediatedNativeAd:nativeExpressView];
 }
 /**
