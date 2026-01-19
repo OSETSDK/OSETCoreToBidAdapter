@@ -87,7 +87,7 @@
 /// @param nativeDataAd 信息流实例
 /// @param error 错误信息
 - (void)nativeDataAdFailedToLoad:(id)nativeDataAd error:(NSError *)error{
-    
+    [self.bridge nativeAd:self didLoadFailWithError:error];
 }
 
 
