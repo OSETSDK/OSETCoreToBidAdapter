@@ -66,7 +66,7 @@
 
 
 /// 信息流加载成功
-- (void)nativeDataAdLoadSuccessWithNative:(id)nativeDataAd nativeExpressViews:(NSArray<OSETNativeDataAdObject *> * _Nullable)nativeDataObjects{
+- (void)nativeDataAdLoadSuccessWithNative:(id)nativeDataAd nativeDataObjects:(NSArray<OSETNativeDataAdObject *> * _Nullable)nativeDataObjects{
     WindmillLogDebug(@"OSET", @"%@", NSStringFromSelector(_cmd));
     OSETNativeDataAdObject * adData = nativeDataObjects.firstObject;
     NSString *price = [NSString stringWithFormat:@"%ld",(long)adData.eCPM];
